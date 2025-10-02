@@ -366,41 +366,50 @@
   }
 
   /* ------------------ Render Question with Fade-In Animation ------------------ */
-  function renderQuestion(index) {
-    quizDiv.innerHTML = "";
-    const q = questions[index];
-    updateHud("progress", `Question ${index + 1}/${questions.length}`);
+function renderQuestion(index) {
+  quizDiv.innerHTML = "";
+  const q = questions[index];
+  updateHud("progress", `Question ${index + 1}/${questions.length}`);
 
-    const card = document.createElement("div");
-    card.className = "card card-custom mx-auto fade-in";
-    card.innerHTML = `
-      <div class="card-body">
-        <div class="question-text">${q.question}</div>
-        <input type="text" class="form-control answer-input" id="ansInput" autocomplete="off" autofocus placeholder="Enter answer in CAPS">
-        <button class="btn btn-accent mt-3" id="submitBtn">Submit</button>
-      </div>
-    `;
-    quizDiv.appendChild(card);
+  // Format question text (convert \n to <br>)
+  let formattedQuestion = q.question.replace(/\n/g, "<br>");
 
-    // Trigger fade-in animation
-    setTimeout(() => card.classList.add("show"), 10);
-
-    startTimer(); // start/reset timer for this question
-
-    const submit = () => {
-      const ans = document.getElementById("ansInput").value.trim() || "-";
-      showConfirmModal(ans, () => submitAnswer(ans));
-    };
-
-    document.getElementById("submitBtn").addEventListener("click", submit);
-    document.getElementById("ansInput").addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (confirmOpen) return; // ignore Enter if confirm is open
-        submit();
-      }
-    });
+  // Auto-insert TRUE/FALSE choices if it's a T/F type
+  if (/TRUE\/FALSE/i.test(q.question)) {
+    formattedQuestion += "<br><br>A) TRUE<br>B) FALSE";
   }
+
+  const card = document.createElement("div");
+  card.className = "card card-custom mx-auto fade-in";
+  card.innerHTML = `
+    <div class="card-body">
+      <div class="question-text">${formattedQuestion}</div>
+      <input type="text" class="form-control answer-input" id="ansInput" autocomplete="off" autofocus placeholder="Enter answer in CAPS">
+      <button class="btn btn-accent mt-3" id="submitBtn">Submit</button>
+    </div>
+  `;
+  quizDiv.appendChild(card);
+
+  // Trigger fade-in animation
+  setTimeout(() => card.classList.add("show"), 10);
+
+  startTimer(); // start/reset timer for this question
+
+  const submit = () => {
+    const ans = document.getElementById("ansInput").value.trim() || "-";
+    showConfirmModal(ans, () => submitAnswer(ans));
+  };
+
+  document.getElementById("submitBtn").addEventListener("click", submit);
+  document.getElementById("ansInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (confirmOpen) return; // ignore Enter if confirm is open
+      submit();
+    }
+  });
+}
+
 
   /* ------------------ Submit Answer (Uses Batch Map for Speed) ------------------ */
   function submitAnswer(userAnswer) {
