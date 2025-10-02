@@ -7,7 +7,7 @@
   <!-- Bootstrap 5.3 CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Custom CSS for Dark Theme Enhancements -->
+  <!-- Custom CSS for Dark Theme Enhancements + Animations -->
   <style>
     :root {
       --bg: #0f172a;
@@ -36,11 +36,13 @@
       background-color: var(--accent);
       border-color: var(--accent);
       color: #05232e;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .btn-accent:hover {
       background-color: #0ea5e9;
       border-color: #0ea5e9;
       color: #05232e;
+      transform: scale(1.05);
     }
     .hud-pills {
       display: flex;
@@ -56,6 +58,15 @@
       padding: 6px 12px;
       font-size: 13px;
       color: #cbd5e1;
+      transition: all 0.3s ease;
+    }
+    .pill-custom.updated {
+      animation: pulse 0.5s ease-in-out;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
     }
     .question-text {
       font-size: 18px;
@@ -72,10 +83,13 @@
       border: 1px solid #1f2937;
       border-radius: 16px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      transform: scale(0.9);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
     }
-    .modal-header-custom {
-      border-bottom: 1px solid #1f2937;
-      color: #e5e7eb;
+    .modal.show .modal-content-custom {
+      transform: scale(1);
+      opacity: 1;
     }
     .modal-body-custom {
       color: #cbd5e1;
@@ -88,6 +102,43 @@
       color: var(--muted);
       text-align: center;
       padding: 24px 12px;
+    }
+    /* Loading Spinner */
+    .loading-spinner {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+    .loading-spinner.show {
+      display: block;
+    }
+    .spinner-border-custom {
+      color: var(--accent);
+    }
+    /* Fade-in Animation for Questions/Results */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .fade-in.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Answer Input Styling */
+    .answer-input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #243041;
+      background: #0b1220;
+      color: #e5e7eb;
+      margin-top: 10px;
+      transition: border-color 0.3s ease;
+    }
+    .answer-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
     }
   </style>
 </head>
@@ -131,6 +182,13 @@
         <button class="btn btn-accent btn-lg" id="startBtn">
           <i class="bi bi-play-circle me-2"></i>START EXAM
         </button>
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+          <div class="spinner-border spinner-border-custom" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2 text-muted">Loading exam... Please wait.</p>
+        </div>
       </div>
     </div>
   </main>
@@ -207,7 +265,7 @@
   </div>
 
  <script>
-  /* ------------------ Complete JavaScript Script ------------------ */
+  /* ------------------ Complete JavaScript Script (Batch Fetch + Animations) ------------------ */
 
   // Bootstrap Modal Instances
   const warningModal = new bootstrap.Modal(document.getElementById('warningModal'));
@@ -244,11 +302,13 @@
 
   /* ------------------ Exam State ------------------ */
   let questions = [];
+  let answersMap = {}; // Temporary storage for all answers (batch-fetched)
   let userAnswers = [];
   let score = 0;
   let current = 0;
   let timer;
   let remaining = 30; // 30 seconds per question
+  let useBatchAnswers = true; // Flag for batch mode (fallback to false if batch fails)
 
   // User info
   let userInfo = { lastName: '', firstName: '', email: '', startTime: '', endTime: '', date: '' };
@@ -266,6 +326,7 @@
   const resultEl = document.getElementById("result");
   const startBtn = document.getElementById("startBtn");
   const startCard = document.getElementById("startCard");
+  const loadingSpinner = document.getElementById("loadingSpinner");
 
   /* ------------------ Timer Functions ------------------ */
   function formatTime(s) {
@@ -277,10 +338,10 @@
   function startTimer() {
     clearInterval(timer);
     remaining = 30; // reset to 30 seconds per question
-    timerEl.textContent = "Time: 00:30";
+    updateHud("timer", "Time: 00:30");
     timer = setInterval(() => {
       remaining--;
-      timerEl.textContent = "Time: " + formatTime(remaining);
+      updateHud("timer", "Time: " + formatTime(remaining));
       if (remaining <= 0) {
         clearInterval(timer);
         autoSubmitAnswer();
@@ -294,14 +355,24 @@
     submitAnswer(ans);
   }
 
-  /* ------------------ Render Question ------------------ */
+  /* ------------------ HUD Update with Animation ------------------ */
+  function updateHud(elementId, text) {
+    const el = document.getElementById(elementId);
+    if (el) {
+      el.textContent = text;
+      el.classList.add("updated");
+      setTimeout(() => el.classList.remove("updated"), 500);
+    }
+  }
+
+  /* ------------------ Render Question with Fade-In Animation ------------------ */
   function renderQuestion(index) {
     quizDiv.innerHTML = "";
     const q = questions[index];
-    progressEl.textContent = `Question ${index + 1}/${questions.length}`;
+    updateHud("progress", `Question ${index + 1}/${questions.length}`);
 
     const card = document.createElement("div");
-    card.className = "card card-custom mx-auto";
+    card.className = "card card-custom mx-auto fade-in";
     card.innerHTML = `
       <div class="card-body">
         <div class="question-text">${q.question}</div>
@@ -310,6 +381,9 @@
       </div>
     `;
     quizDiv.appendChild(card);
+
+    // Trigger fade-in animation
+    setTimeout(() => card.classList.add("show"), 10);
 
     startTimer(); // start/reset timer for this question
 
@@ -328,42 +402,64 @@
     });
   }
 
-  /* ------------------ Submit Answer and Check with Google Sheet ------------------ */
+  /* ------------------ Submit Answer (Uses Batch Map for Speed) ------------------ */
   function submitAnswer(userAnswer) {
     clearInterval(timer); // stop timer on submit
 
     const q = questions[current];
     const questionCode = q.code; // assuming each question has a unique 'code' property
 
-    // Fetch correct answer from Google Apps Script endpoint
-    fetch(`${ANSWER_API_URL}?code=${encodeURIComponent(questionCode)}`)
-      .then(res => res.json())
-      .then(data => {
-        const correctAnswer = data.answer || "";
-        userAnswers[current] = userAnswer;
+    let correctAnswer = "";
+    if (useBatchAnswers && answersMap[questionCode]) {
+      correctAnswer = answersMap[questionCode]; // Instant lookup from batch
+    } else {
+      // Fallback: Fetch single answer if batch failed
+      fetch(`${ANSWER_API_URL}?code=${encodeURIComponent(questionCode)}`)
+        .then(res => res.json())
+        .then(data => {
+          correctAnswer = data.answer || "";
+          processAnswer(correctAnswer, userAnswer);
+        })
+        .catch(err => {
+          console.error("Failed to fetch answer:", err);
+          processAnswer("", userAnswer);
+        });
+      return; // Exit early for async fallback
+    }
 
-        if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
-          score++;
-        }
+    // Batch mode: Process synchronously
+    processAnswer(correctAnswer, userAnswer);
+  }
 
-        current++;
-        if (current < questions.length) {
-          renderQuestion(current);
-        } else {
-          finishExam();
-        }
-      })
-      .catch(err => {
-        console.error("Failed to fetch answer:", err);
-        // fallback: treat as incorrect and continue
-        userAnswers[current] = userAnswer;
-        current++;
-        if (current < questions.length) {
-          renderQuestion(current);
-        } else {
-          finishExam();
-        }
-      });
+  function processAnswer(correctAnswer, userAnswer) {
+    userAnswers[current] = userAnswer;
+
+    if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+      score++;
+    }
+
+    current++;
+    if (current < questions.length) {
+      renderQuestion(current);
+    } else {
+      finishExam();
+    }
+  }
+
+  /* ------------------ Batch Fetch Answers ------------------ */
+  async function fetchAllAnswers() {
+    try {
+      const res = await fetch(`${ANSWER_API_URL}?action=getAllAnswers`);
+      const data = await res.json();
+      answersMap = data; // Store as map {code: answer}
+      console.log("Batch answers loaded:", answersMap);
+      return true;
+    } catch (err) {
+      console.error("Batch fetch failed:", err);
+      alert("Warning: Could not load answers in batch mode. Using slower per-question mode.");
+      useBatchAnswers = false;
+      return false;
+    }
   }
 
   /* ------------------ Confirm Modal (Bootstrap) ------------------ */
@@ -408,27 +504,31 @@
     }, { once: true });
   }
 
-  /* ------------------ Finish Exam & Record Grade ------------------ */
+  /* ------------------ Finish Exam & Record Grade (with Fade-In) ------------------ */
   function finishExam() {
     clearInterval(timer);
     isExamActive = false;
     quizDiv.innerHTML = "";
-    progressEl.textContent = "Exam Completed";
+    updateHud("progress", "Exam Completed");
     resultEl.textContent = "Exam Finished";
 
     const finalScore = `${score}/${questions.length}`;
-    const html = `
-      <div class="card card-custom mx-auto" style="max-width: 600px;">
-        <div class="card-body text-center">
-          <h2 class="card-title">Exam Results</h2>
-          <h3 class="text-primary">Final Score: ${finalScore}</h3>
-          <div id="countdownBox" class="mt-3 fs-6 text-muted">
-            After 300s, this will go back to the start page.
-          </div>
+    const resultsCard = document.createElement("div");
+    resultsCard.className = "card card-custom mx-auto fade-in";
+    resultsCard.style.maxWidth = "600px";
+    resultsCard.innerHTML = `
+      <div class="card-body text-center">
+        <h2 class="card-title">Exam Results</h2>
+        <h3 class="text-primary">Final Score: ${finalScore}</h3>
+        <div id="countdownBox" class="mt-3 fs-6 text-muted">
+          After 300s, this will go back to the start page.
         </div>
       </div>
     `;
-    quizDiv.innerHTML = html;
+    quizDiv.appendChild(resultsCard);
+
+    // Trigger fade-in
+    setTimeout(() => resultsCard.classList.add("show"), 10);
 
     // Record grade to Google Sheet
     userInfo.endTime = new Date().toISOString();
@@ -461,22 +561,30 @@
     }, 1000);
   }
 
-  /* ------------------ Reset Exam ------------------ */
+  /* ------------------ Reset Exam (with Fade-Out) ------------------ */
   function resetExam() {
-    quizDiv.innerHTML = "";
-    resultEl.textContent = "Enter your details to begin the exam.";
-    startBtn.style.display = "block";
-    startCard.style.display = "block";
-    progressEl.textContent = "Question 0/0";
-    timerEl.textContent = "Time: 00:30";
-    score = 0;
-    current = 0;
-    userAnswers = [];
-    remaining = 30;
-    tabWarnings = 0;
-    violationLock = false;
-    isExamActive = false;
-    document.body.style.background = "var(--bg)";
+    // Fade out quiz area
+    quizDiv.style.opacity = "0";
+    quizDiv.style.transition = "opacity 0.5s ease";
+    setTimeout(() => {
+      quizDiv.innerHTML = "";
+      quizDiv.style.opacity = "1";
+      resultEl.textContent = "Enter your details to begin the exam.";
+      startBtn.style.display = "block";
+      startCard.style.display = "block";
+      updateHud("progress", "Question 0/0");
+      updateHud("timer", "Time: 00:30");
+      score = 0;
+      current = 0;
+      userAnswers = [];
+      remaining = 30;
+      tabWarnings = 0;
+      violationLock = false;
+      isExamActive = false;
+      answersMap = {}; // Clear temporary storage
+      useBatchAnswers = true;
+      document.body.style.background = "var(--bg)";
+    }, 500);
   }
 
   /* ------------------ Violation Handling ------------------ */
@@ -546,7 +654,7 @@
     duplicateModal.hide();
   });
 
-  /* ------------------ Start Exam with Duplicate Check ------------------ */
+  /* ------------------ Start Exam with Duplicate Check + Batch Load + Loading Animation ------------------ */
   startBtn.addEventListener("click", async () => {
     const lastName = document.getElementById("lastName").value.trim();
     const firstName = document.getElementById("firstName").value.trim();
@@ -588,18 +696,29 @@
       resultEl.textContent = "Exam in progress...";
       isExamActive = true;
 
-      // Load questions
-      fetch("exam-data.json")
-        .then(res => res.json())
-        .then(data => {
-          questions = shuffleArray(data.questions);
+      // Show loading spinner
+      loadingSpinner.classList.add("show");
+
+      // Load questions and batch answers concurrently
+      Promise.all([
+        fetch("exam-data.json").then(res => res.json()),
+        fetchAllAnswers()
+      ])
+        .then(([questionsData, batchSuccess]) => {
+          questions = shuffleArray(questionsData.questions);
           current = 0;
           score = 0;
           userAnswers = [];
+
+          // Hide loading spinner
+          loadingSpinner.classList.remove("show");
+
+          // Render first question with animation
           renderQuestion(0);
         })
         .catch(err => {
           console.error(err);
+          loadingSpinner.classList.remove("show");
           resultEl.textContent = "Failed to load exam data.";
           isExamActive = false;
           startCard.style.display = "block";
@@ -621,3 +740,4 @@
 </script>
 </body>
 </html>
+
