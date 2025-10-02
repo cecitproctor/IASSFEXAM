@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Information Assurance and Security Exam</title>
+  <!-- Bootstrap 5.3 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Custom CSS for Dark Theme Enhancements -->
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #38bdf8;
+      --muted: #94a3b8;
+      --ok: #22c55e;
+      --bad: #ef4444;
+    }
+    body {
+      background-color: var(--bg);
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Helvetica Neue, Arial, Noto Sans;
+    }
+    .header-bg {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.08), transparent);
+      border-bottom: 1px solid #1f2937;
+    }
+    .card-custom {
+      background-color: var(--card);
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+    .btn-accent {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #05232e;
+    }
+    .btn-accent:hover {
+      background-color: #0ea5e9;
+      border-color: #0ea5e9;
+      color: #05232e;
+    }
+    .hud-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .pill-custom {
+      background-color: #0b1220;
+      border: 1px solid #1f2937;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .question-text {
+      font-size: 18px;
+      line-height: 1.4;
+      text-align: left;
+      margin: 6px 0 14px 0;
+    }
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+      color: var(--accent);
+    }
+    .modal-content-custom {
+      background-color: var(--card);
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+    .modal-header-custom {
+      border-bottom: 1px solid #1f2937;
+      color: #e5e7eb;
+    }
+    .modal-body-custom {
+      color: #cbd5e1;
+    }
+    .warn-text {
+      color: var(--bad);
+      font-weight: 700;
+    }
+    footer {
+      color: var(--muted);
+      text-align: center;
+      padding: 24px 12px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header-bg py-4 text-center">
+    <h1 class="mb-2" style="font-size: clamp(22px, 4vw, 36px); letter-spacing: 0.2px;">Information and Assurance Security</h1>
+    <h2 class="mb-1" style="font-size: clamp(18px, 3vw, 24px); color: var(--bad);">ALL ANSWER NEEDS TO BE CAPSLOCK OR ELSE IT IS WRONG.</h2>
+    <p class="mb-0 text-muted" style="font-size: clamp(14px, 2.3vw, 16px);">OS and Physical Environment Security</p>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container py-4">
+    <!-- HUD -->
+    <div class="hud-pills">
+      <span class="pill-custom" id="progress">Question 0/0</span>
+      <span class="pill-custom" id="timer">Time: 00:30</span>
+    </div>
+
+    <!-- Quiz Area -->
+    <div id="quiz"></div>
+
+    <!-- Start Card with Form -->
+    <div class="card card-custom mx-auto" style="max-width: 600px;" id="startCard">
+      <div class="card-body text-center">
+        <h5 class="card-title" id="result">Enter your details to begin the exam.</h5>
+        <form id="userForm">
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="lastName" placeholder="Last Name" required autocomplete="off">
+            <label for="lastName">Last Name (Required)</label>
+          </div>
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="firstName" placeholder="First Name" required autocomplete="off">
+            <label for="firstName">First Name (Required)</label>
+          </div>
+          <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="email" placeholder="Email" required>
+            <label for="email">Email (Required)</label>
+          </div>
+        </form>
+        <button class="btn btn-accent btn-lg" id="startBtn">
+          <i class="bi bi-play-circle me-2"></i>START EXAM
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto">
+    Made for classroom use.
+  </footer>
+
+  <!-- Bootstrap JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Bootstrap Modals -->
+  <!-- Warning Modal (for violations) -->
+  <div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-content-custom">
+        <div class="modal-header modal-header-custom">
+          <h5 class="modal-title" id="warningModalLabel">
+            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Warning
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center modal-body-custom">
+          <div class="warn-text mb-3">⚠ Do not switch tabs or minimize the exam.</div>
+          <p id="warningText">This is your first warning. Continuing will restore fullscreen.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-accent" id="continueBtn">Continue Exam</button>
+          <button type="button" class="btn btn-secondary" id="exitBtn" data-bs-dismiss="modal">Exit Exam</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal (for answer submission) -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-content-custom">
+        <div class="modal-header modal-header-custom">
+          <h5 class="modal-title" id="confirmModalLabel">Confirm Answer</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center modal-body-custom">
+          <p id="confirmText">Are you sure you want to submit this answer?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-accent" id="confirmYes">Yes</button>
+          <button type="button" class="btn btn-secondary" id="confirmNo" data-bs-dismiss="modal">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Duplicate Modal -->
+  <div class="modal fade" id="duplicateModal" tabindex="-1" aria-labelledby="duplicateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-content-custom">
+        <div class="modal-header modal-header-custom">
+          <h5 class="modal-title" id="duplicateModalLabel">
+            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Duplicate Entry
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center modal-body-custom">
+          <div class="warn-text mb-3">⚠ Duplicate Name Detected</div>
+          <p id="duplicateText">A record with this name already exists. Please contact your instructor.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-accent" id="duplicateOk" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <script>
+  /* ------------------ Complete JavaScript Script ------------------ */
+
+  // Bootstrap Modal Instances
+  const warningModal = new bootstrap.Modal(document.getElementById('warningModal'));
+  const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+  const duplicateModal = new bootstrap.Modal(document.getElementById('duplicateModal'));
+
+  let confirmOpen = false;
+  let confirmCallback = null;
+
+  /* ------------------ Exam Guardrails ------------------ */
+  // Block reload/inspect/common shortcuts
+  document.addEventListener("keydown", function(e) {
+    const k = e.key?.toLowerCase?.() || "";
+    if (e.key === "F5" || (e.ctrlKey && k === "r")) { e.preventDefault(); }
+    if (e.key === "F12" || (e.ctrlKey && e.shiftKey && (k === "i" || k === "j"))) { e.preventDefault(); }
+    if (e.ctrlKey && ["c", "v", "x", "a", "s", "u"].includes(k)) { e.preventDefault(); }
+  });
+  // Disable right click
+  document.addEventListener("contextmenu", e => e.preventDefault());
+
+  /* ------------------ Fullscreen Helpers ------------------ */
+  function requestFullscreen() {
+    const el = document.documentElement;
+    if (el.requestFullscreen) return el.requestFullscreen();
+    if (el.mozRequestFullScreen) return el.mozRequestFullScreen();
+    if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+    if (el.msRequestFullscreen) return el.msRequestFullscreen();
+  }
+
+  function inFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement ||
+              document.mozFullScreenElement || document.msFullscreenElement);
+  }
+
+  /* ------------------ Exam State ------------------ */
+  let questions = [];
+  let userAnswers = [];
+  let score = 0;
+  let current = 0;
+  let timer;
+  let remaining = 30; // 30 seconds per question
+
+  // User info
+  let userInfo = { lastName: '', firstName: '', email: '', startTime: '', endTime: '', date: '' };
+
+  // Replace this with your actual Google Apps Script Web App URL
+  const ANSWER_API_URL = "https://script.google.com/macros/s/AKfycbwxmZZLM1Ukpuu3N5qJEM83EgBg374XwxaWK8578XjbMF26EhLA4tEnxPqj2u5SvLK9/exec";
+
+  let tabWarnings = 0;
+  let isExamActive = false;
+  let violationLock = false; // prevents duplicate triggers while modal open
+
+  const quizDiv = document.getElementById("quiz");
+  const progressEl = document.getElementById("progress");
+  const timerEl = document.getElementById("timer");
+  const resultEl = document.getElementById("result");
+  const startBtn = document.getElementById("startBtn");
+  const startCard = document.getElementById("startCard");
+
+  /* ------------------ Timer Functions ------------------ */
+  function formatTime(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, "0");
+    const sec = (s % 60).toString().padStart(2, "0");
+    return m + ":" + sec;
+  }
+
+  function startTimer() {
+    clearInterval(timer);
+    remaining = 30; // reset to 30 seconds per question
+    timerEl.textContent = "Time: 00:30";
+    timer = setInterval(() => {
+      remaining--;
+      timerEl.textContent = "Time: " + formatTime(remaining);
+      if (remaining <= 0) {
+        clearInterval(timer);
+        autoSubmitAnswer();
+      }
+    }, 1000);
+  }
+
+  function autoSubmitAnswer() {
+    const ansInput = document.getElementById("ansInput");
+    const ans = ansInput ? ansInput.value.trim() || "-" : "-";
+    submitAnswer(ans);
+  }
+
+  /* ------------------ Render Question ------------------ */
+  function renderQuestion(index) {
+    quizDiv.innerHTML = "";
+    const q = questions[index];
+    progressEl.textContent = `Question ${index + 1}/${questions.length}`;
+
+    const card = document.createElement("div");
+    card.className = "card card-custom mx-auto";
+    card.innerHTML = `
+      <div class="card-body">
+        <div class="question-text">${q.question}</div>
+        <input type="text" class="form-control answer-input" id="ansInput" autocomplete="off" autofocus placeholder="Enter answer in CAPS">
+        <button class="btn btn-accent mt-3" id="submitBtn">Submit</button>
+      </div>
+    `;
+    quizDiv.appendChild(card);
+
+    startTimer(); // start/reset timer for this question
+
+    const submit = () => {
+      const ans = document.getElementById("ansInput").value.trim() || "-";
+      showConfirmModal(ans, () => submitAnswer(ans));
+    };
+
+    document.getElementById("submitBtn").addEventListener("click", submit);
+    document.getElementById("ansInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (confirmOpen) return; // ignore Enter if confirm is open
+        submit();
+      }
+    });
+  }
+
+  /* ------------------ Submit Answer and Check with Google Sheet ------------------ */
+  function submitAnswer(userAnswer) {
+    clearInterval(timer); // stop timer on submit
+
+    const q = questions[current];
+    const questionCode = q.code; // assuming each question has a unique 'code' property
+
+    // Fetch correct answer from Google Apps Script endpoint
+    fetch(`${ANSWER_API_URL}?code=${encodeURIComponent(questionCode)}`)
+      .then(res => res.json())
+      .then(data => {
+        const correctAnswer = data.answer || "";
+        userAnswers[current] = userAnswer;
+
+        if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+          score++;
+        }
+
+        current++;
+        if (current < questions.length) {
+          renderQuestion(current);
+        } else {
+          finishExam();
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch answer:", err);
+        // fallback: treat as incorrect and continue
+        userAnswers[current] = userAnswer;
+        current++;
+        if (current < questions.length) {
+          renderQuestion(current);
+        } else {
+          finishExam();
+        }
+      });
+  }
+
+  /* ------------------ Confirm Modal (Bootstrap) ------------------ */
+  function showConfirmModal(answer, onConfirm) {
+    document.getElementById("confirmText").textContent = `Are you sure you want to submit "${answer}" as your final answer?`;
+    confirmModal.show();
+    confirmOpen = true;
+    confirmCallback = onConfirm;
+
+    // Handle keys for modal (capture phase)
+    const handleKeys = (e) => {
+      if (e.key === "Enter") { e.preventDefault(); handleYes(); }
+      if (e.key === "Escape") { e.preventDefault(); handleNo(); }
+    };
+    document.addEventListener("keydown", handleKeys, true);
+
+    function handleYes() {
+      confirmModal.hide();
+      confirmOpen = false;
+      document.removeEventListener("keydown", handleKeys, true);
+      if (confirmCallback) confirmCallback();
+    }
+
+    function handleNo() {
+      confirmModal.hide();
+      confirmOpen = false;
+      document.removeEventListener("keydown", handleKeys, true);
+    }
+
+    // Event listeners for buttons (remove on hide to avoid duplicates)
+    const confirmYesBtn = document.getElementById("confirmYes");
+    const confirmNoBtn = document.getElementById("confirmNo");
+    confirmYesBtn.onclick = handleYes;
+    confirmNoBtn.onclick = handleNo;
+
+    // Clean up on modal hide
+    confirmModal._element.addEventListener('hidden.bs.modal', () => {
+      confirmOpen = false;
+      document.removeEventListener("keydown", handleKeys, true);
+      confirmYesBtn.onclick = null;
+      confirmNoBtn.onclick = null;
+    }, { once: true });
+  }
+
+  /* ------------------ Finish Exam & Record Grade ------------------ */
+  function finishExam() {
+    clearInterval(timer);
+    isExamActive = false;
+    quizDiv.innerHTML = "";
+    progressEl.textContent = "Exam Completed";
+    resultEl.textContent = "Exam Finished";
+
+    const finalScore = `${score}/${questions.length}`;
+    const html = `
+      <div class="card card-custom mx-auto" style="max-width: 600px;">
+        <div class="card-body text-center">
+          <h2 class="card-title">Exam Results</h2>
+          <h3 class="text-primary">Final Score: ${finalScore}</h3>
+          <div id="countdownBox" class="mt-3 fs-6 text-muted">
+            After 300s, this will go back to the start page.
+          </div>
+        </div>
+      </div>
+    `;
+    quizDiv.innerHTML = html;
+
+    // Record grade to Google Sheet
+    userInfo.endTime = new Date().toISOString();
+    userInfo.date = new Date().toISOString().split('T')[0];
+    const recordUrl = `${ANSWER_API_URL}?action=recordGrade&lastName=${encodeURIComponent(userInfo.lastName)}&firstName=${encodeURIComponent(userInfo.firstName)}&email=${encodeURIComponent(userInfo.email)}&score=${encodeURIComponent(finalScore)}&startTime=${encodeURIComponent(userInfo.startTime)}&endTime=${encodeURIComponent(userInfo.endTime)}&date=${encodeURIComponent(userInfo.date)}`;
+
+    fetch(recordUrl)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          console.log("Grade recorded successfully");
+        } else {
+          console.error("Failed to record grade:", data.error);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to record grade:", err);
+      });
+
+    // 5-minute countdown to reset
+    let countdown = 300;
+    const cdEl = document.getElementById("countdownBox");
+    const interval = setInterval(() => {
+      countdown--;
+      cdEl.textContent = `After ${countdown}s, this will go back to the start page.`;
+      if (countdown <= 0) {
+        clearInterval(interval);
+        resetExam();
+      }
+    }, 1000);
+  }
+
+  /* ------------------ Reset Exam ------------------ */
+  function resetExam() {
+    quizDiv.innerHTML = "";
+    resultEl.textContent = "Enter your details to begin the exam.";
+    startBtn.style.display = "block";
+    startCard.style.display = "block";
+    progressEl.textContent = "Question 0/0";
+    timerEl.textContent = "Time: 00:30";
+    score = 0;
+    current = 0;
+    userAnswers = [];
+    remaining = 30;
+    tabWarnings = 0;
+    violationLock = false;
+    isExamActive = false;
+    document.body.style.background = "var(--bg)";
+  }
+
+  /* ------------------ Violation Handling ------------------ */
+  function handleViolation() {
+    if (!isExamActive || violationLock) return;
+    violationLock = true;
+
+    tabWarnings++;
+
+    if (tabWarnings === 1) {
+      // First offense: show modal + auto resume after 8s
+      document.getElementById("warningText").textContent = "This is your first warning. Resuming exam in 8s...";
+      warningModal.show();
+
+      let autoResume = 8;
+      const interval = setInterval(() => {
+        autoResume--;
+        document.getElementById("warningText").textContent = `Resuming exam in ${autoResume}s...`;
+        if (autoResume <= 0) {
+          clearInterval(interval);
+          warningModal.hide();
+          requestFullscreen().catch(() => {});
+          setTimeout(() => { violationLock = false; }, 150);
+        }
+      }, 1000);
+    } else {
+      // Second offense: end exam
+      document.body.style.background = "red";
+      warningModal.hide();
+      finishExam();
+      violationLock = false;
+    }
+  }
+
+  // Visibility change (tab switch / minimize)
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { handleViolation(); }
+  });
+
+  // Exit fullscreen = violation
+  document.addEventListener("fullscreenchange", () => {
+    if (isExamActive && !inFullscreen()) { handleViolation(); }
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    if (isExamActive && !inFullscreen()) { handleViolation(); }
+  });
+  document.addEventListener("msfullscreenchange", () => {
+    if (isExamActive && !inFullscreen()) { handleViolation(); }
+  });
+
+  /* ------------------ Modal Event Listeners ------------------ */
+  // Warning Modal Buttons
+  document.getElementById("continueBtn").addEventListener("click", async () => {
+    warningModal.hide();
+    try { await requestFullscreen(); } catch (e) {}
+    setTimeout(() => { violationLock = false; }, 150);
+  });
+
+  document.getElementById("exitBtn").addEventListener("click", () => {
+    warningModal.hide();
+    finishExam();
+    violationLock = false;
+  });
+
+  // Duplicate Modal Button
+  document.getElementById("duplicateOk").addEventListener("click", () => {
+    duplicateModal.hide();
+  });
+
+  /* ------------------ Start Exam with Duplicate Check ------------------ */
+  startBtn.addEventListener("click", async () => {
+    const lastName = document.getElementById("lastName").value.trim();
+    const firstName = document.getElementById("firstName").value.trim();
+    const email = document.getElementById("email").value.trim();
+
+    // Client-side validation
+    if (!lastName || !firstName || !email) {
+      alert("Please fill in all fields.");
+      return;
+    }
+    if (!email.includes("@")) {
+      alert("Please enter a valid email.");
+      return;
+    }
+
+    // Store user info
+    userInfo.lastName = lastName;
+    userInfo.firstName = firstName;
+    userInfo.email = email;
+    userInfo.startTime = new Date().toISOString();
+    userInfo.date = new Date().toISOString().split('T')[0];
+
+    // Check for duplicate via Apps Script
+    const checkUrl = `${ANSWER_API_URL}?action=checkDuplicate&lastName=${encodeURIComponent(lastName)}&firstName=${encodeURIComponent(firstName)}`;
+
+    try {
+      const res = await fetch(checkUrl);
+      const data = await res.json();
+
+      if (data.exists) {
+        document.getElementById("duplicateText").textContent = `A record for "${firstName} ${lastName}" already exists. Please contact your instructor.`;
+        duplicateModal.show();
+        return;
+      }
+
+      // No duplicate: Proceed to exam
+      try { await requestFullscreen(); } catch (e) {}
+      startCard.style.display = "none";
+      resultEl.textContent = "Exam in progress...";
+      isExamActive = true;
+
+      // Load questions
+      fetch("exam-data.json")
+        .then(res => res.json())
+        .then(data => {
+          questions = shuffleArray(data.questions);
+          current = 0;
+          score = 0;
+          userAnswers = [];
+          renderQuestion(0);
+        })
+        .catch(err => {
+          console.error(err);
+          resultEl.textContent = "Failed to load exam data.";
+          isExamActive = false;
+          startCard.style.display = "block";
+        });
+    } catch (err) {
+      console.error("Failed to check duplicate:", err);
+      alert("Error checking duplicate. Please try again.");
+    }
+  });
+
+  /* ------------------ Utility Functions ------------------ */
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+</script>
+</body>
+</html>
